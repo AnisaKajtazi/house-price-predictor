@@ -5,6 +5,7 @@ from utils.style import load_style
 
 load_style()
 
+
 if "predicted" not in st.session_state:
     st.session_state.predicted = False
 
@@ -18,6 +19,7 @@ st.title("AI House Price Predictor")
 
 
 st.subheader("Step 1: Basic Info")
+
 purpose = st.selectbox("Purpose", ["Buy", "Rent"])
 members = st.slider("Family Members", 1, 10)
 
@@ -34,10 +36,38 @@ if st.session_state.step1_done:
 
     st.subheader("Step 2: House Details")
 
-    area = st.number_input("Area", value=3000)
-    bedrooms = st.number_input("Bedrooms", value=2)
-    bathrooms = st.number_input("Bathrooms", value=2)
-    stories = st.number_input("Stories", value=2)
+
+    area = st.number_input(
+        "Area (sqft)",
+        min_value=1650,
+        max_value=16200,
+        value=None,
+        placeholder="1650 - 16200"
+    )
+
+    bedrooms = st.number_input(
+        "Bedrooms",
+        min_value=1,
+        max_value=6,
+        value=None,
+        placeholder="1 - 6"
+    )
+
+    bathrooms = st.number_input(
+        "Bathrooms",
+        min_value=1,
+        max_value=4,
+        value=None,
+        placeholder="1 - 4"
+    )
+
+    stories = st.number_input(
+        "Stories",
+        min_value=1,
+        max_value=4,
+        value=None,
+        placeholder="1 - 4"
+    )
 
     mainroad = 1 if st.selectbox("Main Road", ["Yes", "No"]) == "Yes" else 0
     guestroom = 1 if st.selectbox("Guest Room", ["Yes", "No"]) == "Yes" else 0
@@ -45,7 +75,14 @@ if st.session_state.step1_done:
     hotwaterheating = 1 if st.selectbox("Hot Water Heating", ["Yes", "No"]) == "Yes" else 0
     airconditioning = 1 if st.selectbox("Air Conditioning", ["Yes", "No"]) == "Yes" else 0
 
-    parking = st.number_input("Parking", value=1)
+    parking = st.number_input(
+        "Parking",
+        min_value=0,
+        max_value=3,
+        value=None,
+        placeholder="0 - 3"
+    )
+
     prefarea = 1 if st.selectbox("Preferred Area", ["Yes", "No"]) == "Yes" else 0
 
     furnishing = st.selectbox(
@@ -55,28 +92,35 @@ if st.session_state.step1_done:
 
     furnishingstatus = 2 if furnishing == "Furnished" else 1 if furnishing == "Semi-Furnished" else 0
 
+
     if st.button("Predict Price 💡"):
 
-        features = pd.DataFrame([[area, bedrooms, bathrooms, stories,
-                                  mainroad, guestroom, basement,
-                                  hotwaterheating, airconditioning,
-                                  parking, prefarea, furnishingstatus]],
-                                columns=[
-                                    'area','bedrooms','bathrooms','stories',
-                                    'mainroad','guestroom','basement',
-                                    'hotwaterheating','airconditioning',
-                                    'parking','prefarea','furnishingstatus'
-                                ])
+        if None in [area, bedrooms, bathrooms, stories, parking]:
+            st.error("⚠️ Please fill all fields correctly")
+        else:
 
-        prediction = model.predict(features)[0]
+            features = pd.DataFrame([[
+                area, bedrooms, bathrooms, stories,
+                mainroad, guestroom, basement,
+                hotwaterheating, airconditioning,
+                parking, prefarea, furnishingstatus
+            ]],
+            columns=[
+                'area','bedrooms','bathrooms','stories',
+                'mainroad','guestroom','basement',
+                'hotwaterheating','airconditioning',
+                'parking','prefarea','furnishingstatus'
+            ])
 
-        st.session_state.features = features
-        st.session_state.prediction = prediction
-        st.session_state.predicted = True
+            prediction = model.predict(features)[0]
 
-        st.success(f" ${prediction:,.2f}")
+            st.session_state.features = features
+            st.session_state.prediction = prediction
+            st.session_state.predicted = True
+
+            st.success(f"${prediction:,.2f}")
+
 
     if st.session_state.predicted:
         if st.button("Open AI Analysis 📊"):
             st.switch_page("pages/analysis.py")
-
